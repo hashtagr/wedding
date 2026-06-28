@@ -120,7 +120,7 @@ input {
 .hero__theme {
   margin: 0 0 1rem;
   font-family: var(--font-sans);
-  font-size: 0.78rem;
+  font-size: 1.01rem;
   font-weight: 500;
   letter-spacing: 0.28em;
   text-transform: uppercase;
@@ -130,7 +130,7 @@ input {
 .hero__names {
   margin: 0;
   font-family: var(--font-serif);
-  font-size: clamp(2.8rem, 11vw, 4rem);
+  font-size: clamp(3.64rem, 14.3vw, 5.2rem);
   font-weight: 500;
   line-height: 0.95;
   letter-spacing: 0.02em;
@@ -139,7 +139,7 @@ input {
 .hero__date {
   margin: 1rem 0 0;
   font-family: var(--font-serif);
-  font-size: clamp(1.35rem, 5vw, 1.75rem);
+  font-size: clamp(1.76rem, 6.5vw, 2.28rem);
   letter-spacing: 0.18em;
   color: var(--color-accent-dark);
 }
@@ -154,7 +154,7 @@ input {
 .hero__intro {
   margin: 0;
   font-family: var(--font-serif);
-  font-size: 1.2rem;
+  font-size: 1.56rem;
   font-style: italic;
   line-height: 1.55;
   color: var(--color-text-muted);
@@ -163,7 +163,7 @@ input {
 .hero__intro--second {
   margin-top: 0.85rem;
   font-style: normal;
-  font-size: 1.05rem;
+  font-size: 1.37rem;
 }
 
 .hero__scroll {
