@@ -1,9 +1,11 @@
+const BASE = import.meta.env.BASE_URL ?? '/';
+
 const IMAGES = {
-  couple: '/Фото_Артема_Полины.JPG',
-  background: '/Фото_фон.JPG',
-  palette: '/Цвета_свадьбы.png',
-  dressWomen: '/Дресскод_девушки.jpeg',
-  dressMen: '/Дресскод_мужчины.jpeg',
+  couple: `${BASE}Фото_Артема_Полины.JPG`,
+  background: `${BASE}Фото_фон.JPG`,
+  palette: `${BASE}Цвета_свадьбы.png`,
+  dressWomen: `${BASE}Дресскод_девушки.jpeg`,
+  dressMen: `${BASE}Дресскод_мужчины.jpeg`,
 };
 
 const SHARED = {

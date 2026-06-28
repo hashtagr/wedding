@@ -474,6 +474,14 @@ input {
   border: 0;
 }
 
+.field--honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
 .field__label,
 legend.field__label {
   font-size: 0.82rem;

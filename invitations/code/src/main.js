@@ -1,6 +1,8 @@
 import { getPageContent } from './content.js';
 import { renderPage } from './render.js';
 
+const SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_URL ?? '';
+
 const variant = document.body.dataset.variant ?? 'family';
 const content = getPageContent(variant);
 const app = document.getElementById('app');
@@ -48,6 +50,14 @@ function initForm(pageVariant) {
     const name = String(formData.get('name') ?? '').trim();
     const children = String(formData.get('children') ?? '').trim();
     const alcohol = formData.getAll('alcohol').map((value) => String(value));
+    const honeypot = String(formData.get('company') ?? '').trim();
+
+    // Honeypot: настоящие гости это поле не видят и не заполняют.
+    if (honeypot) {
+      showMessage(message, 'Спасибо! Мы получили ваш ответ.', 'success');
+      form.reset();
+      return;
+    }
 
     if (!name) {
       showMessage(message, 'Пожалуйста, укажите ФИО.', 'error');
@@ -55,44 +65,30 @@ function initForm(pageVariant) {
       return;
     }
 
+    if (!SCRIPT_URL) {
+      showMessage(message, 'Форма пока не настроена. Напишите нам напрямую.', 'error');
+      return;
+    }
+
     submitButton.disabled = true;
     submitButton.textContent = 'Отправляем...';
 
+    const payload = {
+      name,
+      children,
+      alcohol,
+      variant: pageVariant,
+    };
+
     try {
-      const payloadData = {
-        name,
-        children,
-        alcohol,
-        variant: pageVariant,
-      };
-
-      console.info('[rsvp] client submit', payloadData);
-
-      const response = await fetch('/api/rsvp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payloadData),
-      });
-
-      const payload = await response.json().catch(() => ({}));
-
-      console.info('[rsvp] client response', {
-        status: response.status,
-        ok: payload.ok,
-        error: payload.error,
-      });
-
-      if (!response.ok || !payload.ok) {
-        throw new Error(payload.error || 'Не удалось отправить ответ');
-      }
-
+      await sendRsvp(payload);
       showMessage(message, 'Спасибо! Мы получили ваш ответ.', 'success');
       form.reset();
     } catch (error) {
-      console.error('[rsvp] client error', error);
+      console.error('[rsvp] submit error', error);
       showMessage(
         message,
-        error.message || 'Что-то пошло не так. Попробуйте ещё раз чуть позже.',
+        'Не удалось отправить ответ. Проверьте интернет и попробуйте ещё раз.',
         'error',
       );
     } finally {
@@ -100,6 +96,33 @@ function initForm(pageVariant) {
       submitButton.textContent = 'Отправить ответ';
     }
   });
+}
+
+async function sendRsvp(payload) {
+  const body = JSON.stringify(payload);
+
+  // text/plain — «простой» запрос, без CORS preflight (OPTIONS),
+  // который Apps Script не обрабатывает.
+  const requestInit = {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body,
+  };
+
+  try {
+    const response = await fetch(SCRIPT_URL, requestInit);
+    const result = await response.json().catch(() => null);
+
+    if (result && result.ok === false) {
+      throw new Error(result.error || 'Apps Script error');
+    }
+
+    return;
+  } catch (error) {
+    // Если чтение ответа блокирует CORS — отправляем повторно в no-cors
+    // (строка в таблицу всё равно добавится, ответ просто непрозрачный).
+    await fetch(SCRIPT_URL, { ...requestInit, mode: 'no-cors' });
+  }
 }
 
 function showMessage(element, text, type) {

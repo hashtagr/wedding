@@ -155,6 +155,17 @@ export function renderPage(content) {
             <p class="form-note reveal">${escapeHtml(content.form.note)}</p>
 
             <form class="rsvp-form reveal" id="rsvp-form" novalidate>
+              <div class="field field--honeypot" aria-hidden="true">
+                <label for="guest-company">Организация</label>
+                <input
+                  type="text"
+                  id="guest-company"
+                  name="company"
+                  tabindex="-1"
+                  autocomplete="off"
+                />
+              </div>
+
               <div class="field">
                 <label class="field__label" for="guest-name">ФИО</label>
                 <input

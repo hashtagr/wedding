@@ -1,6 +1,6 @@
 # Техническое задание: электронные пригласительные на свадьбу
 
-**Версия документа:** 0.6 (черновик)  
+**Версия документа:** 0.7 (черновик)  
 **Дата:** 27.06.2026  
 **Пара:** Артем и Полина · **26 сентября 2026**  
 **Референс:** [invite-dream.ru/shamil-diana](https://invite-dream.ru/shamil-diana)
@@ -189,7 +189,7 @@
 - Отправка данных в **Google Таблицу** через **Google Apps Script** (см. §8).
 - После успешной отправки — сообщение пользователю («Спасибо, мы получили ваш ответ»).
 - Валидация обязательных полей на клиенте.
-- Защита от повторной отправки / спама — по возможности (debounce, honeypot).
+- Защита от спама: скрытое honeypot-поле (см. §8.5).
 
 ### 7.4. Формат строки в Google Таблице
 
@@ -209,26 +209,55 @@
 
 ### 8.1. Решение
 
-**Google Apps Script** + serverless-прокси на Vercel (локально — middleware Vite).
-
-Фронтенд отправляет данные на `/api/rsvp`; сервер пересылает их в опубликованный Web App Apps Script. Скрипт добавляет строку на лист **«Ответы»**.
+Сайт **полностью статический**. Браузер гостя обращается к опубликованному Web App **Google Apps Script** напрямую (без бэкенда). Скрипт добавляет строку на лист **«Ответы»**.
 
 **Таблица:** `1f1zz9AQehqAR3ytI95qeP6wU3f-8J716RM7Wqe8W_SI`  
 **Код скрипта:** `invitations/docs/google-apps-script.gs`
 
-### 8.2. Необходимо в окружении
+### 8.2. Обход CORS
 
-- `GOOGLE_SCRIPT_URL` — URL развернутого Web App (заканчивается на `/exec`)
+Запрос отправляется как «простой» (`Content-Type: text/plain`), без preflight `OPTIONS`, который Apps Script не обрабатывает. Если чтение ответа блокируется CORS — повторная отправка в режиме `no-cors` (строка в таблицу всё равно добавляется).
 
-### 8.3. Схема
+### 8.3. Окружение
+
+- `VITE_GOOGLE_SCRIPT_URL` — URL Web App (заканчивается на `/exec`).
+  - локально: файл `invitations/code/.env`;
+  - в CI: переменная/секрет `GOOGLE_SCRIPT_URL` репозитория GitHub.
+
+URL Web App не является секретом (это публичный endpoint Apps Script).
+
+### 8.4. Схема
 
 ```
-Браузер гостя → POST /api/rsvp → Google Apps Script → Google Таблица
+Браузер гостя → POST (text/plain) → Google Apps Script → Google Таблица
 ```
 
-### 8.4. Почему не Telegram
+### 8.5. Защита от спама
+
+Скрытое honeypot-поле в форме: заполнено только ботами — такие отправки игнорируются.
+
+### 8.6. Почему не Telegram
 
 Telegram Bot API недоступен без VPN у части гостей и с локального сервера разработки. Google Sheets доступен гостям без дополнительных действий.
+
+---
+
+## 8a. Хостинг и деплой
+
+- **Платформа:** GitHub Pages (репозиторий `hashtagr/wedding`).
+- **Сборка:** `npm run build` (Vite, `base: './'`), результат в `invitations/code/dist`.
+- **CI/CD:** `.github/workflows/deploy.yml` — при пуше в `main` автоматически собирает и публикует.
+- **Адреса гостей:**
+  - родственники — `…/family.html`;
+  - друзья — `…/friends.html`;
+  - корень — нейтральная страница без раскрытия версий.
+
+### Что настроить в GitHub один раз
+
+1. **Settings → Pages → Source:** `GitHub Actions`.
+2. **Settings → Secrets and variables → Actions → New repository secret:**
+   - имя: `GOOGLE_SCRIPT_URL`
+   - значение: URL Web App Apps Script.
 
 ---
 
